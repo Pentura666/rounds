@@ -41,9 +41,9 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation;padding
 .dim{color:var(--dim)}
 
 /* ---------- setup ---------- */
-#setup,#settings{max-width:560px;margin:0 auto;padding:14px 18px 150px}
+#setup,#settings,#schedule{max-width:560px;margin:0 auto;padding:14px 18px 150px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 0 20px}
-header h1,#settings h1{font-size:28px;font-weight:700;margin:0;letter-spacing:-.02em}
+header h1,#settings h1,#schedule h1{font-size:28px;font-weight:700;margin:0;letter-spacing:-.02em}
 h1 .cur{animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 #summary{color:var(--dim);font-size:13px;margin-top:6px}
@@ -98,7 +98,7 @@ textarea::placeholder{color:var(--dim)}
 .swatch{flex:1;height:64px;border:1px solid var(--faint);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;font-size:13px;background:#000}
 .swatch i{display:block;width:26px;height:10px}
 .swatch[aria-pressed="true"]{border:2px solid currentColor}
-.wk{padding:12px 0 14px;border-top:1px solid var(--faint);border-bottom:1px solid var(--faint)}
+.wk{cursor:pointer;padding:12px 0 14px;border-top:1px solid var(--faint);border-bottom:1px solid var(--faint)}
 .wkdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .wkd{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
 .wkd i{display:grid;place-items:center;width:100%;height:28px;border:1px solid var(--faint);font-style:normal;font-size:13px}
@@ -117,9 +117,9 @@ textarea::placeholder{color:var(--dim)}
 .startbar{position:fixed;left:0;right:0;bottom:0;padding:16px 18px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 65%,transparent)}
 #start{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:524px;margin:0 auto;height:58px;padding:0 20px;background:var(--acc);color:var(--bg);font-size:17px;font-weight:700}
 #start:active{opacity:.85}
-body.show-settings #setup,body.show-settings #startbar{display:none}
-#settings{display:none}
-body.show-settings #settings{display:block}
+body.show-settings #setup,body.show-settings #startbar,body.show-schedule #setup,body.show-schedule #startbar{display:none}
+#settings,#schedule{display:none}
+body.show-settings #settings,body.show-schedule #schedule{display:block}
 .nav{display:flex;justify-content:flex-end;height:44px;align-items:center}
 
 /* ---------- sheet ---------- */
@@ -151,7 +151,7 @@ body.running{overflow:hidden}
 .steps-list li{counter-increment:st;display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--faint);font-size:14px}
 .steps-list li::before{content:counter(st) ".";color:var(--dim)}
 .steps-list b{font-weight:700}
-.hbtns{display:flex;gap:14px}
+.hbtns{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 14px}
 #run[data-phase="work"]{background:var(--acc);color:var(--bg)}
 #flash{position:absolute;inset:0;background:var(--acc);opacity:0;pointer-events:none}
 #run[data-phase="work"] #flash{background:var(--bg)}
@@ -216,10 +216,10 @@ body.running{overflow:hidden}
 <body>
 
 <main id="setup">
-  <header><div><h1>rounds<span class="cur">_</span></h1><div id="summary"></div></div><div class="hbtns"><button class="tbtn" id="openInstall">[install]</button><button class="tbtn" id="openSettings">[settings]</button></div></header>
+  <header><div><h1>rounds<span class="cur">_</span></h1><div id="summary"></div></div><div class="hbtns"><button class="tbtn" id="openInstall">[install]</button><button class="tbtn" id="openSchedule">[schedule]</button><button class="tbtn" id="openSettings">[settings]</button></div></header>
 
   <div class="sec">this week</div>
-  <div class="wk" id="wk">
+  <div class="wk" id="wk" role="button" tabindex="0" aria-label="Open schedule">
     <div class="wkdays" id="wkDays"></div>
     <div class="wkmsg" id="wkMsg"></div>
     <div class="wkstats num"><span>week <b id="wkN"></b></span><span>streak <b id="wkS"></b></span><span>best <b id="wkB"></b></span><span>total <b id="wkT"></b></span></div>
@@ -268,6 +268,26 @@ body.running{overflow:hidden}
   </div>
   <p class="foot">voice works only while the screen is on.</p>
 
+  <div class="sec">background</div>
+  <div class="list">
+    <button class="row" id="tLock" role="switch"><span class="lbl">keep running in background<small>sounds keep going when you switch apps or lock the phone</small></span><span class="sw"></span></button>
+  </div>
+  <p class="foot">on: plays on silent and pauses your music. the voice speaks only while the app is on screen; beeps, ticks and signals keep going.<br>off: sounds play over your music but stop when you leave the app.</p>
+
+  <div class="sec">app</div>
+  <div class="list">
+    <button class="row" id="openInstall2"><span class="lbl">add to home screen<small>use rounds like a normal app</small></span><span class="chev"></span></button>
+    <button class="row" id="exportBtn"><span class="lbl">export settings<small>copy presets and settings as a backup code</small></span><span class="chev"></span></button>
+    <button class="row" id="importBtn"><span class="lbl">import settings<small>paste a backup code from another copy of rounds</small></span><span class="chev"></span></button>
+  </div>
+  <p class="foot">the home screen app keeps its own storage, separate from safari and the claude app. export here, then import in the home screen app to move your presets.</p>
+  <div hidden id="selHolder"><select id="selSound" aria-label="Sound"></select><select id="selCd" aria-label="Countdown"><option value="3">last 3 sec</option><option value="5">last 5 sec</option><option value="10">last 10 sec</option></select><select id="selCds" aria-label="Countdown sound"></select><select id="selTick" aria-label="Ticks"><option value="all">every second</option><option value="cd">countdown only</option></select><select id="selVoice" aria-label="Announcer voice"></select><select id="selBefore" aria-label="Reminder alert"><option value="0">at start time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>
+</section>
+
+<section id="schedule">
+  <div class="nav"><button class="tbtn" id="schDone">[done]</button></div>
+  <h1>schedule</h1>
+
   <div class="sec">goal</div>
   <div class="list">
     <div class="row"><span class="lbl">weekly goal<small>workouts per week to keep the streak</small></span><span class="val num" id="v-goal"></span>
@@ -284,20 +304,6 @@ body.running{overflow:hidden}
   </div>
   <p class="foot" id="remFoot"></p>
 
-  <div class="sec">background</div>
-  <div class="list">
-    <button class="row" id="tLock" role="switch"><span class="lbl">keep running in background<small>sounds keep going when you switch apps or lock the phone</small></span><span class="sw"></span></button>
-  </div>
-  <p class="foot">on: plays on silent and pauses your music. the voice speaks only while the app is on screen; beeps, ticks and signals keep going.<br>off: sounds play over your music but stop when you leave the app.</p>
-
-  <div class="sec">app</div>
-  <div class="list">
-    <button class="row" id="openInstall2"><span class="lbl">add to home screen<small>use rounds like a normal app</small></span><span class="chev"></span></button>
-    <button class="row" id="exportBtn"><span class="lbl">export settings<small>copy presets and settings as a backup code</small></span><span class="chev"></span></button>
-    <button class="row" id="importBtn"><span class="lbl">import settings<small>paste a backup code from another copy of rounds</small></span><span class="chev"></span></button>
-  </div>
-  <p class="foot">the home screen app keeps its own storage, separate from safari and the claude app. export here, then import in the home screen app to move your presets.</p>
-  <div hidden id="selHolder"><select id="selSound" aria-label="Sound"></select><select id="selCd" aria-label="Countdown"><option value="3">last 3 sec</option><option value="5">last 5 sec</option><option value="10">last 10 sec</option></select><select id="selCds" aria-label="Countdown sound"></select><select id="selTick" aria-label="Ticks"><option value="all">every second</option><option value="cd">countdown only</option></select><select id="selVoice" aria-label="Announcer voice"></select><select id="selBefore" aria-label="Reminder alert"><option value="0">at start time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>
 </section>
 
 <div class="startbar" id="startbar"><button id="start"><span>[ start ]</span><span class="num" id="total">00:00</span></button></div>
@@ -853,7 +859,8 @@ function artwork(key, word, big, small, inv){
 }
 function nowPlaying(title, artist, art){
   if(!run || run.mode!=="track" || !("mediaSession" in navigator) || typeof MediaMetadata==="undefined") return;
-  try{ navigator.mediaSession.metadata = new MediaMetadata({title, artist, album:run.name, artwork: art ? [{src:art, sizes:"512x512", type:"image/png"}] : []}); }catch(e){}
+  try{ navigator.mediaSession.metadata = new MediaMetadata({title, artist, album:run.name, artwork: art ? [{src:art, sizes:"512x512", type:"image/png"}] : []}); }
+  catch(e){ try{ navigator.mediaSession.metadata = new MediaMetadata({title, artist, album:run.name}); }catch(e2){} }
 }
 function segMeta(i){
   const s = run.segs[i], n = run.segs[i+1], c = run.cfg;
@@ -1109,11 +1116,24 @@ if(standalone()){ $("openInstall").hidden = true; $("openInstall2").hidden = tru
 window.__rounds = { build, buildTrack: (segs,total)=>buildTrack(segs,total), state: ()=>run, cfg: ()=>cfg, weekStats, weekMsg, cheer, icsText, renderWeek };
 $("openSettings").addEventListener("click", ()=>{ voiceTries = 0; renderVoices(); document.body.classList.add("show-settings"); window.scrollTo(0,0); });
 $("setDone").addEventListener("click", ()=>{ document.body.classList.remove("show-settings"); window.scrollTo(0,0); });
+const openSchedule = () => { renderRemind(); document.body.classList.add("show-schedule"); window.scrollTo(0,0); };
+$("openSchedule").addEventListener("click", openSchedule);
+$("wk").addEventListener("click", openSchedule);
+$("wk").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSchedule(); } });
+$("schDone").addEventListener("click", ()=>{ document.body.classList.remove("show-schedule"); window.scrollTo(0,0); });
 
 if(!activeId){ const m = matchPreset(); if(m) activeId = m.id; }
 renderRows(); refresh(); renderPresets(); renderSettings(); renderHistory(); renderVoices(); renderRemind();
 })();
 </script>
-<script>if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+<script>
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").then(r=>{
+    document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") r.update().catch(()=>{}); });
+  }).catch(()=>{});
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{ if(had && !(window.__rounds && window.__rounds.state())) location.reload(); });
+}
+</script>
 </body>
 </html>

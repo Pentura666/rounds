@@ -1,12 +1,13 @@
-const C = "rounds-v4";
+const C = "rounds-v5";
 const CORE = ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
-self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
+self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(CORE.map(u => new Request(u, {cache: "reload"})))).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== C).map(x => caches.delete(x)))).then(() => self.clients.claim())); });
 // stale-while-revalidate: answer from cache at once, refresh the cache in the background
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   e.respondWith(caches.match(e.request).then(hit => {
-    const net = fetch(e.request).then(r => { if (r.ok || r.type === "opaque") { const copy = r.clone(); caches.open(C).then(c => c.put(e.request, copy)); } return r; });
+    const same = new URL(e.request.url).origin === location.origin;
+    const net = (same ? fetch(e.request.url, {cache: "no-cache"}) : fetch(e.request)).then(r => { if (r.ok || r.type === "opaque") { const copy = r.clone(); caches.open(C).then(c => c.put(e.request, copy)); } return r; });
     if (hit) { e.waitUntil(net.catch(() => {})); return hit; }
     return net.catch(() => caches.match("index.html"));
   }));
