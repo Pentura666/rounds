@@ -41,9 +41,9 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation;padding
 .dim{color:var(--dim)}
 
 /* ---------- setup ---------- */
-#setup,#settings,#schedule{max-width:560px;margin:0 auto;padding:14px 18px 150px}
+#setup,#settings,#schedule,#streak{max-width:560px;margin:0 auto;padding:14px 18px 150px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 0 20px}
-header h1,#settings h1,#schedule h1{font-size:28px;font-weight:700;margin:0;letter-spacing:-.02em}
+header h1,#settings h1,#schedule h1,#streak h1{font-size:28px;font-weight:700;margin:0;letter-spacing:-.02em}
 h1 .cur{animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 #summary{color:var(--dim);font-size:13px;margin-top:6px}
@@ -98,7 +98,7 @@ textarea::placeholder{color:var(--dim)}
 .swatch{flex:1;height:64px;border:1px solid var(--faint);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;font-size:13px;background:#000}
 .swatch i{display:block;width:26px;height:10px}
 .swatch[aria-pressed="true"]{border:2px solid currentColor}
-.wk{cursor:pointer;padding:12px 0 14px;border-top:1px solid var(--faint);border-bottom:1px solid var(--faint)}
+.wk{padding:12px 0 14px;border-top:1px solid var(--faint);border-bottom:1px solid var(--faint)}
 .wkdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .wkd{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--dim)}
 .wkd i{display:grid;place-items:center;width:100%;height:28px;border:1px solid var(--faint);font-style:normal;font-size:13px}
@@ -109,6 +109,13 @@ textarea::placeholder{color:var(--dim)}
 .wkmsg::before{content:"> "}
 .wkstats{display:flex;justify-content:space-between;gap:8px;margin-top:10px;font-size:12px;color:var(--dim)}
 .wkstats b{color:var(--acc);font-weight:500}
+.wh{display:flex;align-items:center;gap:12px;min-height:40px;border-bottom:1px solid var(--faint);font-size:14px}
+.wh .wd{flex:1;color:var(--dim);font-size:13px}
+.wh .wb{display:flex;align-items:center;gap:4px;font-size:12px}
+.wh .wb i{display:block;width:18px;height:14px;border:1px solid var(--faint)}
+.wh .wb i.on{background:var(--acc);border-color:var(--acc)}
+.wh .wn{min-width:44px;text-align:right}
+.wh.met .wn{font-weight:700}
 .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:12px 0;border-bottom:1px solid var(--faint)}
 .days button{height:44px;border:1px solid var(--faint);font-size:13px}
 .days button[aria-pressed="true"]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
@@ -117,9 +124,9 @@ textarea::placeholder{color:var(--dim)}
 .startbar{position:fixed;left:0;right:0;bottom:0;padding:16px 18px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 65%,transparent)}
 #start{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:524px;margin:0 auto;height:58px;padding:0 20px;background:var(--acc);color:var(--bg);font-size:17px;font-weight:700}
 #start:active{opacity:.85}
-body.show-settings #setup,body.show-settings #startbar,body.show-schedule #setup,body.show-schedule #startbar{display:none}
-#settings,#schedule{display:none}
-body.show-settings #settings,body.show-schedule #schedule{display:block}
+body.show-settings #setup,body.show-settings #startbar,body.show-schedule #setup,body.show-schedule #startbar,body.show-streak #setup,body.show-streak #startbar{display:none}
+#settings,#schedule,#streak{display:none}
+body.show-settings #settings,body.show-schedule #schedule,body.show-streak #streak{display:block}
 .nav{display:flex;justify-content:flex-end;height:44px;align-items:center}
 
 /* ---------- sheet ---------- */
@@ -151,8 +158,13 @@ body.running{overflow:hidden}
 .steps-list li{counter-increment:st;display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--faint);font-size:14px}
 .steps-list li::before{content:counter(st) ".";color:var(--dim)}
 .steps-list b{font-weight:700}
-header>div:first-child{flex:1 1 0}
-.hbtns{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 14px}
+.menu{position:relative;flex:none}
+.dd{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:240px;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--acc);animation:up .15s ease-out}
+.dd button{padding:15px 16px;text-align:left;font-size:15px;white-space:nowrap;border-bottom:1px dashed var(--faint)}
+.dd button:last-child{border-bottom:0}
+.dd button::before{content:"> "}
+.dd button:active{background:var(--acc);color:var(--bg)}
+#menuBtn[aria-expanded="true"]{background:var(--acc);color:var(--bg)}
 #run[data-phase="work"]{background:var(--acc);color:var(--bg)}
 #flash{position:absolute;inset:0;background:var(--acc);opacity:0;pointer-events:none}
 #run[data-phase="work"] #flash{background:var(--bg)}
@@ -217,14 +229,8 @@ header>div:first-child{flex:1 1 0}
 <body>
 
 <main id="setup">
-  <header><div><h1>rounds<span class="cur">_</span></h1><div id="summary"></div></div><div class="hbtns"><button class="tbtn" id="openInstall">[install]</button><button class="tbtn" id="openSchedule">[schedule]</button><button class="tbtn" id="openSettings">[settings]</button></div></header>
-
-  <div class="sec">this week</div>
-  <div class="wk" id="wk" role="button" tabindex="0" aria-label="Open schedule">
-    <div class="wkdays" id="wkDays"></div>
-    <div class="wkmsg" id="wkMsg"></div>
-    <div class="wkstats num"><span>week <b id="wkN"></b></span><span>streak <b id="wkS"></b></span><span>best <b id="wkB"></b></span><span>total <b id="wkT"></b></span></div>
-  </div>
+  <header><div><h1>rounds<span class="cur">_</span></h1><div id="summary"></div></div><div class="menu"><button class="tbtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">[menu]</button>
+    <div class="dd" id="menuDd" hidden><button id="openStreak">streak</button><button id="openSchedule">schedule</button><button id="openSettings">settings</button><button id="openInstall">add to home screen</button></div></div></header>
 
   <div class="sec">presets</div>
   <div class="presets" id="presets"></div>
@@ -283,6 +289,22 @@ header>div:first-child{flex:1 1 0}
   </div>
   <p class="foot">the home screen app keeps its own storage, separate from safari and the claude app. export here, then import in the home screen app to move your presets.</p>
   <div hidden id="selHolder"><select id="selSound" aria-label="Sound"></select><select id="selCd" aria-label="Countdown"><option value="3">last 3 sec</option><option value="5">last 5 sec</option><option value="10">last 10 sec</option></select><select id="selCds" aria-label="Countdown sound"></select><select id="selTick" aria-label="Ticks"><option value="all">every second</option><option value="cd">countdown only</option></select><select id="selVoice" aria-label="Announcer voice"></select><select id="selBefore" aria-label="Reminder alert"><option value="0">at start time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>
+</section>
+
+<section id="streak">
+  <div class="nav"><button class="tbtn" id="stkDone">[done]</button></div>
+  <h1>streak</h1>
+
+  <div class="sec">this week</div>
+  <div class="wk" id="wk">
+    <div class="wkdays" id="wkDays"></div>
+    <div class="wkmsg" id="wkMsg"></div>
+    <div class="wkstats num"><span>week <b id="wkN"></b></span><span>streak <b id="wkS"></b></span><span>best <b id="wkB"></b></span><span>total <b id="wkT"></b></span></div>
+  </div>
+
+  <div class="sec">last 8 weeks</div>
+  <ul class="hist" id="wkHist"></ul>
+  <button class="linkbtn" id="stkToSchedule">[edit goal and reminders]</button>
 </section>
 
 <section id="schedule">
@@ -711,7 +733,7 @@ function weekStats(now = Date.now()){
   let best = 0, len = 0;
   if(wlog.length){ for(let w = weekStart(Math.min(...wlog.map(e=>e.d))); w <= wk; w = weekStart(w + 10*DAY)){ len = (per.get(w)||0) >= goal ? len+1 : 0; best = Math.max(best, len); } }
   const today = dow(now), daysLeft = 7 - today - (days.has(today) ? 1 : 0);
-  return {n, goal, met, streak, before, best, total:wlog.length, days, today, left:Math.max(0, goal-n), daysLeft};
+  return {n, goal, met, streak, before, best, total:wlog.length, days, today, left:Math.max(0, goal-n), daysLeft, per, wk};
 }
 const wks = n => n + (n===1 ? " week" : " weeks");
 function weekMsg(st){
@@ -744,6 +766,14 @@ function renderWeek(now = Date.now()){
   $("wkMsg").textContent = weekMsg(st);
   $("wkN").textContent = st.n+"/"+st.goal; $("wkS").textContent = st.streak+"w"; $("wkB").textContent = st.best+"w"; $("wkT").textContent = st.total;
   $("v-goal").textContent = goal+"/wk";
+  const rows = []; let w = st.wk;
+  for(let k=0;k<8;k++){
+    const c = st.per.get(w)||0, f = Math.min(c, goal);
+    const label = k===0 ? "this week" : k===1 ? "last week" : new Date(w).toLocaleDateString([], {day:"numeric", month:"short"}).toLowerCase();
+    rows.push(`<li class="wh${c>=goal ? " met" : ""}"><span class="wd">${label}</span><span class="wb">${"<i class=on></i>".repeat(f)}${"<i></i>".repeat(goal-f)}${c>goal ? "+"+(c-goal) : ""}</span><span class="wn num">${c}/${goal}</span></li>`);
+    w = prevWeek(w);
+  }
+  $("wkHist").innerHTML = rows.join("");
   return st;
 }
 const setGoal = v => { goal = Math.min(7, Math.max(1, v)); save("rounds.goal",goal); renderWeek(); };
@@ -1101,7 +1131,7 @@ document.addEventListener("touchend", e=>{
   }
   lastTap = now;
 }, {passive:false});
-$("openInstall").addEventListener("click", openInstall);
+$("openInstall").addEventListener("click", ()=>{ closeMenu(); openInstall(); });
 $("openInstall2").addEventListener("click", openInstall);
 $("inOk").addEventListener("click", closeInstall);
 $("inScrim").addEventListener("click", closeInstall);
@@ -1115,13 +1145,23 @@ async function copyLink(){
 $("inCopy").addEventListener("click", copyLink);
 if(standalone()){ $("openInstall").hidden = true; $("openInstall2").hidden = true; }
 window.__rounds = { build, buildTrack: (segs,total)=>buildTrack(segs,total), state: ()=>run, cfg: ()=>cfg, weekStats, weekMsg, cheer, icsText, renderWeek };
-$("openSettings").addEventListener("click", ()=>{ voiceTries = 0; renderVoices(); document.body.classList.add("show-settings"); window.scrollTo(0,0); });
-$("setDone").addEventListener("click", ()=>{ document.body.classList.remove("show-settings"); window.scrollTo(0,0); });
-const openSchedule = () => { renderRemind(); document.body.classList.add("show-schedule"); window.scrollTo(0,0); };
-$("openSchedule").addEventListener("click", openSchedule);
-$("wk").addEventListener("click", openSchedule);
-$("wk").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSchedule(); } });
-$("schDone").addEventListener("click", ()=>{ document.body.classList.remove("show-schedule"); window.scrollTo(0,0); });
+/* menu: one dropdown for the other screens */
+const SCREENS = ["settings","schedule","streak"];
+function closeMenu(){ $("menuDd").hidden = true; $("menuBtn").setAttribute("aria-expanded","false"); }
+$("menuBtn").addEventListener("click", e=>{ e.stopPropagation(); const open = $("menuDd").hidden; $("menuDd").hidden = !open; $("menuBtn").setAttribute("aria-expanded", String(open)); });
+document.addEventListener("click", e=>{ if(!$("menuDd").hidden && !e.target.closest(".menu")) closeMenu(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeMenu(); });
+function showScreen(name){
+  closeMenu(); SCREENS.forEach(n=>document.body.classList.toggle("show-"+n, n===name)); window.scrollTo(0,0);
+  if(name==="settings"){ voiceTries = 0; renderVoices(); }
+  if(name==="schedule") renderRemind();
+  if(name==="streak") renderWeek();
+}
+$("openSettings").addEventListener("click", ()=>showScreen("settings"));
+$("openSchedule").addEventListener("click", ()=>showScreen("schedule"));
+$("openStreak").addEventListener("click", ()=>showScreen("streak"));
+$("stkToSchedule").addEventListener("click", ()=>showScreen("schedule"));
+["setDone","schDone","stkDone"].forEach(id=>$(id).addEventListener("click", ()=>showScreen(null)));
 
 if(!activeId){ const m = matchPreset(); if(m) activeId = m.id; }
 renderRows(); refresh(); renderPresets(); renderSettings(); renderHistory(); renderVoices(); renderRemind();
