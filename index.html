@@ -151,6 +151,7 @@ body.running{overflow:hidden}
 .steps-list li{counter-increment:st;display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--faint);font-size:14px}
 .steps-list li::before{content:counter(st) ".";color:var(--dim)}
 .steps-list b{font-weight:700}
+header>div:first-child{flex:1 1 0}
 .hbtns{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 14px}
 #run[data-phase="work"]{background:var(--acc);color:var(--bg)}
 #flash{position:absolute;inset:0;background:var(--acc);opacity:0;pointer-events:none}
