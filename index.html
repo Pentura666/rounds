@@ -873,10 +873,12 @@ function phaseText(i){
 }
 /* lock screen: title, next step and artwork follow the workout */
 const artCache = {};
-function artwork(key, word, big, small, inv){
-  if(artCache[key]) return artCache[key];
+let artCv = null;
+function artwork(key, word, big, small, inv, prog){
+  if(key && artCache[key]) return artCache[key];
   try{
-    const cv = document.createElement("canvas"); cv.width = cv.height = 512; const x = cv.getContext("2d");
+    if(!artCv){ artCv = document.createElement("canvas"); artCv.width = artCv.height = 512; }
+    const cv = artCv, x = cv.getContext("2d");
     const cs = getComputedStyle(document.documentElement), acc = cs.getPropertyValue("--acc").trim() || "#FF3B2F", bg = cs.getPropertyValue("--bg").trim() || "#000";
     const F = (w,px) => `${w} ${px}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
     const fit = (t, w, px) => { x.font = F(w,px); const m = x.measureText(t).width; if(m > 440){ x.font = F(w, Math.floor(px*440/m)); } };
@@ -884,8 +886,11 @@ function artwork(key, word, big, small, inv){
     fit("> "+word, 700, 64); x.fillText("> "+word, 36, 104);
     if(big){ fit(big, 700, 168); x.fillText(big, 30, 330); }
     if(small){ fit(small, 500, 40); x.fillText(small, 36, 420); }
-    x.fillRect(36, 452, 440, 10);
-    return artCache[key] = cv.toDataURL("image/png");
+    if(prog==null) x.fillRect(36, 452, 440, 10);
+    else { x.globalAlpha = .3; x.fillRect(36, 452, 440, 10); x.globalAlpha = 1; x.fillRect(36, 452, Math.round(440*Math.min(1, Math.max(0, prog))), 10); }
+    const url = cv.toDataURL("image/png");
+    if(key) artCache[key] = url;
+    return url;
   }catch(e){ return ""; }
 }
 function nowPlaying(title, artist, art){
@@ -893,20 +898,20 @@ function nowPlaying(title, artist, art){
   try{ navigator.mediaSession.metadata = new MediaMetadata({title, artist, album:run.name, artwork: art ? [{src:art, sizes:"512x512", type:"image/png"}] : []}); }
   catch(e){ try{ navigator.mediaSession.metadata = new MediaMetadata({title, artist, album:run.name}); }catch(e2){} }
 }
-function segMeta(i){
+// called once per second while the audio track runs: the tile shows the phase countdown
+function segMeta(i, left){
   const s = run.segs[i], n = run.segs[i+1], c = run.cfg;
   const rr = s.r ? p2(s.r)+"/"+p2(c.rounds) : "";
   const title = s.t==="work" ? `work ${rr}` + (s.name ? " · "+s.name : "") + (c.sets>1 ? ` · set ${s.set}/${c.sets}` : "")
     : s.t==="rest" && rr ? `rest · after ${rr}` : s.t==="setrest" ? `set rest · set ${s.set}/${c.sets} done` : LABEL[s.t];
-  const artist = n ? `next: ${n.t==="work" && n.name ? n.name : LABEL[n.t]} ${fmt(n.d)}` : "next: finish";
-  const big = s.t==="work" || (s.t==="rest" && rr) ? rr : s.t==="setrest" ? `${s.set}/${c.sets}` : fmt(s.d);
-  const small = s.t==="work" ? (s.name || run.name) : artist;
-  nowPlaying(title, artist, artwork([accent,s.t,big,small].join("|"), LABEL[s.t], big, small, s.t==="work"));
+  const next = n ? `next: ${n.t==="work" && n.name ? n.name : LABEL[n.t]} ${fmt(n.d)}` : "next: finish";
+  const word = LABEL[s.t] + (rr && (s.t==="work" || s.t==="rest") ? " "+rr : s.t==="setrest" ? ` ${s.set}/${c.sets}` : "");
+  const small = s.t==="work" ? (s.name || run.name) : next;
+  nowPlaying(title, `${fmt(left)} left · ${next}`, artwork(null, word, fmt(left), small, s.t==="work", 1 - left/s.d));
 }
 function enterSeg(i){
   run.idx = i; run.lastSec = null;
   const s = run.segs[i], c = run.cfg, P = PACKS[pack];
-  segMeta(i);
   $("run").dataset.phase = s.t;
   $("phase").textContent = s.t==="work" && s.name ? s.name : LABEL[s.t];
   run.lastCells = -1;
@@ -931,6 +936,7 @@ function tick(){
   const s = run.segs[i], left = s.start + s.d - e, sec = Math.ceil(left), inSeg = e - s.start;
   if(sec !== run.lastSec){
     $("clock").textContent = fmt(left);
+    if(run.mode==="track") segMeta(i, left);
     if(!run.paused && run.lastSec!==null && sec>=1){
       if(sec<=countdown && inSeg>1.2){
         if(cdSound==="voice") say(String(sec));
